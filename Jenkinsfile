@@ -2,18 +2,18 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = '767397878056'  // Your AWS account ID
-        AWS_REGION = 'us-east-1'         // Your AWS region
-        ECR_REPOSITORY = 'app-repo'      // Your ECR repository name
+        AWS_ACCOUNT_ID = '767397878056' 
+        AWS_REGION = 'us-east-1'       
+        ECR_REPOSITORY = 'app-repo'      
         ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
-        AWS_CREDENTIALS_ID = 'my-aws-creds'  // Your AWS credentials ID
-        KUBECONFIG_CREDENTIALS_ID = 'my-kubeconfig'  // Your kubeconfig credentials ID
+        AWS_CREDENTIALS_ID = 'awscreds'  
+        KUBECONFIG_CREDENTIALS_ID = 'K8screds'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/your-repo/your-app.git'  // Replace with your GitHub repo URL and branch
+                git branch: 'main', url: 'https://github.com/Yasser-gamil/NTI-Final-Project.git'  // Replace with your GitHub repo URL and branch
             }
         }
 
