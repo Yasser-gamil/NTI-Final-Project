@@ -1,69 +1,59 @@
 pipeline {
-    agent any
-
-    environment {
-        AWS_ACCOUNT_ID = '767397878056'  // Replace with your AWS account ID
-        AWS_REGION = 'us-east-1'         // Replace with your AWS region
-        ECR_REPOSITORY = 'app-repo'      // Replace with your ECR repository name
-        ECR_URL = "${767397878056}.dkr.ecr.${us-east-1}.amazonaws.com/${app-repo}" //767397878056.dkr.ecr.us-east-1.amazonaws.com/app-repo
-        AWS_CREDENTIALS_ID = 'awscreds'  // Replace with the ID of your AWS credentials in Jenkins
-        KUBECONFIG_CREDENTIALS_ID = 'k8screds'  // Replace with the ID of your kubeconfig file in Jenkins
+  agent any
+  environment {
+    AWS_ACCESS_KEY_ID = credentials('aws_access_key')
+    AWS_SECRET_ACCESS_KEY = credentials('aws_secret_key')
+    AWS_DEFAULT_REGION = "eu-east-1"
+    AWS_ACCOUNT_ID = '767397878056'
+    
+    ECR_BACKEND_NAME = 'backend-latest'
+    ECR_FRONTEND_NAME = 'frontend-latest'
+    IMAGE_TAG = "${BUILD_NUMBER}"
+    BACKEND_REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_BACKEND_NAME}"
+    FRONTEND_REPO_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_FRONTEND_NAME}"
+  }
+  stages {
+    stage('Start The Pipeline') {
+      steps {
+        sh 'echo Welcome To NTI Final Project DevOps Automation Track'
+        sh "aws ecr get-login-password --region ${env.AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+      }
     }
-
-    stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/Yasser-gamil/NTI-Final-Project.git'  // Replace with your GitHub repo URL and branch
-            }
+    stage('Build Image and Generate Security Report using Trivy') {
+      steps {
+        script {
+          dir('backend') {
+            sh "docker build -t ${env.BACKEND_REPO_URL}:${env.IMAGE_TAG} ."
+            sh "trivy image ${env.BACKEND_REPO_URL}:${env.IMAGE_TAG} > backend_scan.txt"
+            sh "aws s3 cp backend_scan.txt s3://fp-statefile-bucket/"
+            sh "docker push ${env.BACKEND_REPO_URL}:${env.IMAGE_TAG}" 
+          }
+          dir('frontend') {
+            sh "docker build -t ${env.FRONTEND_REPO_URL}:${env.IMAGE_TAG} ."
+            sh "trivy image ${env.FRONTEND_REPO_URL}:${env.IMAGE_TAG} > frontend_scan.txt"
+            sh "aws s3 cp frontend_scan.txt s3://fp-statefile-bucket/"
+            sh "docker push ${env.FRONTEND_REPO_URL}:${env.IMAGE_TAG}" 
+          }
         }
-
-        stage('Build Backend Docker Image') {
-            steps {
-                script {
-                    sh 'cd backend && docker build -t backend:latest .'  // Ensure Dockerfile exists in 'backend' directory
-                    sh "docker tag backend:latest ${767397878056.dkr.ecr.us-east-1.amazonaws.com/app-repo}:backend-${main}"
-                }
-            }
-        }
-
-        stage('Build Frontend Docker Image') {
-            steps {
-                script {
-                    sh 'cd frontend && docker build -t frontend:latest .'  // Ensure Dockerfile exists in 'frontend' directory
-                    sh "docker tag frontend:latest ${767397878056.dkr.ecr.us-east-1.amazonaws.com/app-repo}:frontend-${main}"
-                }
-            }
-        }
-
-        stage('Push Backend Docker Image to ECR') {
-            steps {
-                script {
-                    withCredentials([aws(credentialsId: AWS_CREDENTIALS_ID, region: AWS_REGION)]) {
-                        sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-                        sh "docker push ${767397878056.dkr.ecr.us-east-1.amazonaws.com/app-repo}:backend-${main}"
-                    }
-                }
-            }
-        }
-
-        stage('Push Frontend Docker Image to ECR') {
-            steps {
-                script {
-                    withCredentials([aws(credentialsId: AWS_CREDENTIALS_ID, region: AWS_REGION)]) {
-                        sh "docker push ${767397878056.dkr.ecr.us-east-1.amazonaws.com/app-repo}:frontend-${main}"
-                    }
-                }
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
-                        sh 'kubectl apply -f k8s'  // Ensure your Kubernetes manifests are in the 'k8s' directory
-                    }
-                }
-            }
-        }
+      }
     }
+    stage('Update Deployment File') {
+      environment {
+        GIT_USER_NAME = "yasser-gamil"
+      }
+      steps {
+        withCredentials([string(credentialsId: 'github_tocken', variable: 'GITHUB_TOKEN')]) {
+          sh 'git config user.email "jenkins@gmail.com"'
+          sh 'git config user.name "yasser"'
+          sh "sed -i 's|image:.*|image: ${env.BACKEND_REPO_URL}:${env.IMAGE_TAG}|g' ./k8s/backend-deployment.yaml"
+          sh "sed -i 's|image:.*|image: ${env.FRONTEND_REPO_URL}:${env.IMAGE_TAG}|g' ./k8s/frontend-deployment.yaml"
+
+          sh 'git remote set-url origin https://github.com/Yasser-gamil/NTI-Final-Project.git'
+          sh 'git add .'
+          sh "git commit -m 'Update deployment image to version ${BUILD_NUMBER}'"
+          sh 'git push origin HEAD:main'
+        }
+      }
+    }
+  }
 }
