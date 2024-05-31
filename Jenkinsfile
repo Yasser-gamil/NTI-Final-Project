@@ -39,7 +39,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
-                        sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                        sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}"
                         sh "docker push ${ECR_URL}:backend-${env.BRANCH_NAME}"
                     }
                 }
@@ -50,6 +50,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
+                        sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}"
                         sh "docker push ${ECR_URL}:frontend-${env.BRANCH_NAME}"
                     }
                 }
@@ -60,9 +61,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
-                        withEnv(["AWS_PROFILE=default"]) { // Ensure AWS_PROFILE is set if using the default profile for kubectl
-                            sh 'kubectl apply -f k8s'  // Ensure your Kubernetes manifests are in the 'k8s' directory
-                        }
+                        sh 'kubectl apply -f k8s'  // Ensure your Kubernetes manifests are in the 'k8s' directory
                     }
                 }
             }
