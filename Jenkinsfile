@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = '767397878056' 
-        AWS_REGION = 'us-east-1'       
-        ECR_REPOSITORY = 'app-repo'      
+        AWS_ACCOUNT_ID = '767397878056'
+        AWS_REGION = 'us-east-1'
+        ECR_REPOSITORY = 'app-repo'
         ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
-        AWS_CREDENTIALS_ID = 'awscreds'  
+        AWS_CREDENTIALS_ID = 'awscreds'
         KUBECONFIG_CREDENTIALS_ID = 'k8screds'
     }
 
@@ -59,7 +59,8 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
+                    withCredentials([aws(credentialsId: AWS_CREDENTIALS_ID, region: AWS_REGION), file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
+                        sh 'aws eks update-kubeconfig --region ${AWS_REGION} --name eks-cluster' // Replace 'your-cluster-name' with your actual EKS cluster name
                         sh 'kubectl apply -f k8s'  // Ensure your Kubernetes manifests are in the 'k8s' directory
                     }
                 }
