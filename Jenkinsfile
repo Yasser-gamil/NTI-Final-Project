@@ -60,7 +60,9 @@ pipeline {
             steps {
                 script {
                     withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
-                        sh 'kubectl apply -f k8s'  // Ensure your Kubernetes manifests are in the 'k8s' directory
+                        withEnv(["AWS_PROFILE=default"]) { // Ensure AWS_PROFILE is set if using the default profile for kubectl
+                            sh 'kubectl apply -f k8s'  // Ensure your Kubernetes manifests are in the 'k8s' directory
+                        }
                     }
                 }
             }
