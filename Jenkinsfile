@@ -7,7 +7,7 @@ pipeline {
         ECR_REPOSITORY = 'app-repo'      
         ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
         AWS_CREDENTIALS_ID = 'awscreds'  
-        KUBECONFIG_CREDENTIALS_ID = 'K8screds'
+        KUBECONFIG_CREDENTIALS_ID = 'k8screds'
     }
 
     stages {
