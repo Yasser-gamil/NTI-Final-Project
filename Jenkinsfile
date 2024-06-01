@@ -67,6 +67,7 @@ pipeline {
                             sh 'aws sts get-caller-identity'  // Debug: Verify AWS credentials
                             sh 'kubectl config view'  // Debug: View kubeconfig to ensure it's loaded
                             sh 'cd k8s'
+                            sh 'ls'
                             sh 'kubectl apply -f namespace.yaml'
                             sh 'kubectl apply -f configmap.yaml'
                             sh 'kubectl apply -f backend-deployment.yaml'
