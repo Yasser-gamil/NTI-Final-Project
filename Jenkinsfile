@@ -66,7 +66,12 @@ pipeline {
                             sh 'kubectl version'  // Debug: Check if kubectl is installed and accessible
                             sh 'aws sts get-caller-identity'  // Debug: Verify AWS credentials
                             sh 'kubectl config view'  // Debug: View kubeconfig to ensure it's loaded
-                            sh 'kubectl apply -f k8s'  // Ensure your Kubernetes manifests are in the 'k8s' directory
+                            sh 'kubectl apply -f namespace.yaml'
+                            sh 'kubectl apply -f configmap.yaml'
+                            sh 'kubectl apply -f backend-deployment.yaml
+                            sh 'kubectl apply -f frontend-deployment.yaml'
+                            sh 'kubectl apply -f network-policies.yaml'
+                            sh 'kubectl apply -f mongo-deployment.yaml'
                         }
                     }
                 }
