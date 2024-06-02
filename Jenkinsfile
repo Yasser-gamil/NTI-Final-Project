@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = '767397878056' 
-        AWS_REGION = 'us-east-1'       
-        ECR_REPOSITORY = 'app-repo'      
+        AWS_ACCOUNT_ID = '767397878056'
+        AWS_REGION = 'us-east-1'
+        ECR_REPOSITORY = 'app-repo'
         ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
-        AWS_CREDENTIALS_ID = 'awscreds'  
+        AWS_CREDENTIALS_ID = 'awscreds'
         KUBECONFIG_CREDENTIALS_ID = 'k8screds'
     }
 
@@ -20,7 +20,7 @@ pipeline {
         stage('Build Backend Docker Image') {
             steps {
                 script {
-                    sh 'cd backend && docker build -t backend-latest .' 
+                    sh 'cd backend && docker build -t backend:latest .'
                     sh "docker tag backend:latest ${ECR_URL}:backend-${env.BRANCH_NAME}"
                 }
             }
@@ -29,7 +29,7 @@ pipeline {
         stage('Build Frontend Docker Image') {
             steps {
                 script {
-                    sh 'cd frontend && docker build -t frontend-latest .' 
+                    sh 'cd frontend && docker build -t frontend:latest .'
                     sh "docker tag frontend:latest ${ECR_URL}:frontend-${env.BRANCH_NAME}"
                 }
             }
@@ -66,6 +66,7 @@ pipeline {
                             sh 'kubectl version'
                             sh 'aws sts get-caller-identity'
                             sh 'kubectl config view'
+                            sh 'kubectl apply -f k8s/pv-and-pvc.yaml'
                             sh 'kubectl apply -f k8s'
                         }
                     }
