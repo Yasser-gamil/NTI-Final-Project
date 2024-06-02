@@ -1,20 +1,19 @@
-FROM node:14-alpine
+FROM node:14 as build
 
-WORKDIR /app
-
+WORKDIR /usr/src/app
+ENV PATH /usr/src/app/node_modules/.bin:$PATH
 COPY package*.json ./
-
+RUN npm install cors
 RUN npm install
 
 COPY . .
 
-ENV PATH /app/node_modules/.bin:$PATH
-
 RUN npm run build
 
-RUN npm install -g serve
+FROM nginx:alpine
 
-EXPOSE 3000
+COPY --from=build /usr/src/app/build /usr/share/nginx/html
+COPY default.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
 
-CMD ["npm", "start"]
-
+CMD ["nginx", "-g", "daemon off;"]
