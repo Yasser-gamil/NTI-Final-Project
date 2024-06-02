@@ -13,7 +13,7 @@ spec:
       labels:
         app: mongo
     spec:
-      volumes: 
+      volumes:
       - name: task-pv-storage
         persistentVolumeClaim:
           claimName: task-pv-claim
