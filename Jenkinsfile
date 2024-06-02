@@ -20,7 +20,7 @@ pipeline {
         stage('Build Backend Docker Image') {
             steps {
                 script {
-                    sh 'cd backend && docker build -t backend:latest .'
+                    sh 'cd backend && docker build -t backend-latest .'
                     sh "docker tag backend:latest ${ECR_URL}:backend-${env.BRANCH_NAME}"
                 }
             }
@@ -29,7 +29,7 @@ pipeline {
         stage('Build Frontend Docker Image') {
             steps {
                 script {
-                    sh 'cd frontend && docker build -t frontend:latest .'
+                    sh 'cd frontend && docker build -t frontend-latest .'
                     sh "docker tag frontend:latest ${ECR_URL}:frontend-${env.BRANCH_NAME}"
                 }
             }
