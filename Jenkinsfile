@@ -13,14 +13,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Yasser-gamil/NTI-Final-Project.git'  // Replace with your GitHub repo URL and branch
+                git branch: 'main', url: 'https://github.com/Yasser-gamil/NTI-Final-Project.git'
             }
         }
 
         stage('Build Backend Docker Image') {
             steps {
                 script {
-                    sh 'cd backend && docker build -t backend:latest .'  // Ensure Dockerfile exists in 'backend' directory
+                    sh 'cd backend && docker build -t backend:latest .' 
                     sh "docker tag backend:latest ${ECR_URL}:backend-${env.BRANCH_NAME}"
                 }
             }
@@ -29,7 +29,7 @@ pipeline {
         stage('Build Frontend Docker Image') {
             steps {
                 script {
-                    sh 'cd frontend && docker build -t frontend:latest .'  // Ensure Dockerfile exists in 'frontend' directory
+                    sh 'cd frontend && docker build -t frontend:latest .' 
                     sh "docker tag frontend:latest ${ECR_URL}:frontend-${env.BRANCH_NAME}"
                 }
             }
@@ -62,11 +62,11 @@ pipeline {
                 script {
                     withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
                         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
-                            sh 'echo $KUBECONFIG'  // Debug: Print KUBECONFIG to check if it is set correctly
-                            sh 'kubectl version'  // Debug: Check if kubectl is installed and accessible
-                            sh 'aws sts get-caller-identity'  // Debug: Verify AWS credentials
-                            sh 'kubectl config view'  // Debug: View kubeconfig to ensure it's loaded
-                            sh 'kubectl apply -f .'
+                            sh 'echo $KUBECONFIG'
+                            sh 'kubectl version'
+                            sh 'aws sts get-caller-identity'
+                            sh 'kubectl config view'
+                            sh 'kubectl apply -f k8s'
                         }
                     }
                 }
