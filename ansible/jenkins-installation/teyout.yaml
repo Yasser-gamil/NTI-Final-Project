@@ -1,0 +1,110 @@
+- name: Setup Jenkins on EC2
+  hosts: jenkins
+  become: yes
+  tasks:
+    - name: Update all packages
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Install Java
+      yum:
+        name: java-11-amazon-corretto
+        state: present
+
+    - name: Remove existing Jenkins repo configuration
+      file:
+        path: /etc/yum.repos.d/jenkins.repo
+        state: absent
+      ignore_errors: yes
+
+    - name: Download Jenkins package
+      get_url:
+        url: https://pkg.jenkins.io/redhat-stable/jenkins-2.452.1-1.1.noarch.rpm
+        dest: /tmp/jenkins.rpm
+
+    - name: Import Jenkins GPG key
+      rpm_key:
+        state: present
+        key: https://pkg.jenkins.io/redhat/jenkins.io.key
+
+    - name: Install Jenkins package
+      command: rpm -ivh /tmp/jenkins.rpm
+
+    - name: Start and enable Jenkins service
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: Wait for Jenkins to start up
+      wait_for:
+        port: 8080
+        host: localhost
+        delay: 30
+        timeout: 300
+
+    - name: Get Jenkins initial admin password
+      shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkins_initial_password
+
+    - name: Print Jenkins initial admin password
+      debug:
+        msg: "Jenkins initial admin password is: {{ jenkins_initial_password.stdout }}"
+
+    - name: Install Git
+      yum:
+        name: git
+        state: present
+
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add jenkins user to the docker group
+      command: sudo usermod -aG docker jenkins
+
+    - name: Add ec2-user to the docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Restart Docker to apply group changes
+      systemd:
+        name: docker
+        state: restarted
+
+    - name: Restart jenkins to apply group changes
+      systemd:
+        name: jenkins
+        state: restarted    
+
+    - name: Download kubectl
+      get_url:
+        url: https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
+    - name: Verify kubectl installation
+      shell: /usr/local/bin/kubectl version --client
+      register: kubectl_version
+      ignore_errors: yes
+
+    - name: Print kubectl installation verification
+      debug:
+        msg: "kubectl version: {{ kubectl_version.stdout }}"
+
+  handlers:
+    - name: restart jenkins
+      systemd:
+        name: jenkins
+        state: restarted
+

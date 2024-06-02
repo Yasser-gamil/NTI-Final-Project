@@ -1,0 +1,2 @@
+[jenkins]
+jenkins-server ansible_host=3.222.245.232 ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/jenkins-instance.pem ansible_python_interpreter=/usr/bin/python3

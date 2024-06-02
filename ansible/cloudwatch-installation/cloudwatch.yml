@@ -1,0 +1,25 @@
+---
+- name: Install AWS CloudWatch Agent on EC2 instances
+  hosts: all
+  become: yes
+  vars:
+    cloudwatch_agent_url: "https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm"
+
+  tasks:
+    - name: Install necessary packages on Amazon Linux
+      yum:
+        name:
+          - amazon-linux-extras
+          - curl
+        state: present
+
+    - name: Download and install the CloudWatch Agent
+      yum:
+        name: "{{ cloudwatch_agent_url }}"
+        state: present
+
+    - name: Start the CloudWatch Agent
+      service:
+        name: amazon-cloudwatch-agent
+        state: started
+        enabled: yes
