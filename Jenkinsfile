@@ -62,7 +62,11 @@ pipeline {
                 script {
                     withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
                         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
-                            sh 'aws eks update-kubeconfig --name eks-cluster --region us-east-1'
+                            sh 'echo $KUBECONFIG'
+                            sh 'kubectl version'
+                            sh 'aws sts get-caller-identity'
+                            sh 'kubectl config view'
+                            sh 'kubectl apply -f k8s/pv-and-pvc.yaml'
                             sh 'kubectl apply -f k8s'
                         }
                     }
