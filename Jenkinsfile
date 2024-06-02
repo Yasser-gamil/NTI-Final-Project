@@ -40,6 +40,7 @@ pipeline {
                 script {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
                         sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}"
+                        sh "sed -i 's|image:.*|image: ${ECR_URL}:backend-${env.BRANCH_NAME}|g' ./k8s/backend-deployment.yaml"
                         sh "docker push ${ECR_URL}:backend-${env.BRANCH_NAME}"
                     }
                 }
@@ -52,6 +53,8 @@ pipeline {
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]) {
                         sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_URL}"
                         sh "docker push ${ECR_URL}:frontend-${env.BRANCH_NAME}"
+                        sh "sed -i 's|image:.*|image: ${ECR_URL}:frontend-${env.BRANCH_NAME}|g' ./k8s/frontend-deployment.yaml"
+                        
                     }
                 }
             }
